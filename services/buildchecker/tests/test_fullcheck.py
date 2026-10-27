@@ -91,6 +91,11 @@ class TestFullCheck(unittest.TestCase):
         targets, _ = execution_graph(self.folder, self.root)
         self.assertIn("unit.o", targets)
 
+    def test_resumed_syscall_without_start_fails_explicitly(self):
+        trace = self.write("t.10", '<... openat resumed>) = 3\n')
+        with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
+            trace_events(trace)
+
     def test_split_args_preserves_commas_in_quoted_and_nested_values(self):
         args = r'AT_FDCWD, "name,\"quoted,part\".h", [1, 2], {fd=3, path="x,y"}, O_RDONLY'
         self.assertEqual(split_args(args), [
