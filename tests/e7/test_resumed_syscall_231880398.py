@@ -1,0 +1,25 @@
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "services" / "buildchecker"))
+
+import tempfile
+import unittest
+
+from buildchecker.fullcheck import trace_events, Unsupported
+
+
+class TestResumedSyscallWithoutStartA12(unittest.TestCase):
+    """A12 E5-E7 扩展测试（选项 A）：无起点 resumed 系统调用必须显式拒绝"""
+
+    def test_resumed_syscall_without_start_fails_explicitly(self):
+        d = Path(tempfile.mkdtemp())
+        p = d / "t.10"
+        p.write_text("<... openat resumed>) = 3\n")
+        with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
+            trace_events(p)
+
+
+if __name__ == "__main__":
+    unittest.main()
