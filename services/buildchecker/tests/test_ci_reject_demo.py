@@ -1,9 +1,9 @@
-"""Deliberately wrong oracle for the protected-branch teaching demonstration.
+"""Corrected oracle after the protected-branch rejection demonstration.
 
-Capture failed CI and merge rejection before correcting the expected code.
+This restores the documented success exit code. The implementation is unchanged.
 """
 from buildchecker.cli import main
 
 
-def test_intentionally_wrong_version_exit_code():
-    assert main(["version"]) == 1, "Intentional teaching fault: version actually returns zero"
+def test_version_returns_success_exit_code():
+    assert main(["version"]) == 0
