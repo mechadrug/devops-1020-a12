@@ -160,6 +160,31 @@ class TestResumedSyscallWithoutStart(unittest.TestCase):
         with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
             trace_events(str(p))
 
+class TestResumedSyscallWithoutStart(unittest.TestCase):
+    """A12 E5-E7 扩展测试（选项 A）：无起点 resumed 系统调用必须显式拒绝"""
+
+    def test_resumed_syscall_without_start_fails_explicitly(self):
+        import os
+        import tempfile
+        from pathlib import Path
+        from buildchecker.fullcheck import trace_events, Unsupported
+
+        d = Path(tempfile.mkdtemp())
+        tf = d / "t.10"
+        tf.write_text("<... openat resumed>) = 3\n")
+        # 部分实现要求传目录，部分要求传文件；优先按现有用法传目录更稳
+        try:
+            with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
+                trace_events(d)
+            return
+        except AssertionError:
+            raise
+        except Exception:
+            pass
+
+        with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
+            trace_events(str(tf))
+
 
 if __name__ == "__main__":
     unittest.main()
