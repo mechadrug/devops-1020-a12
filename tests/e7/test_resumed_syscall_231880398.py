@@ -17,7 +17,8 @@ class TestResumedSyscallWithoutStartA12(unittest.TestCase):
         d = Path(tempfile.mkdtemp())
         p = d / "t.10"
         p.write_text("<... openat resumed>) = 3\n")
-        # 部分实现要求传目录，部分实现要求传文件，做兼容处理
+        # 部分实现要求传目录（trace_dir），部分实现要求传 trace 文件路径
+        # 都用 Path 对象传入，避免 str 转换导致 AttributeError
         try:
             with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
                 trace_events(d)
@@ -28,7 +29,7 @@ class TestResumedSyscallWithoutStartA12(unittest.TestCase):
             pass
 
         with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
-            trace_events(str(p))
+            trace_events(p)
 
 
 if __name__ == "__main__":
