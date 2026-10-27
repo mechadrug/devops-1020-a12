@@ -8,6 +8,7 @@ from buildchecker.fullcheck import (
     declaration_graph,
     execution_graph,
     project_path,
+    split_args,
     trace_events,
 )
 
@@ -94,6 +95,13 @@ class TestFullCheck(unittest.TestCase):
         trace = self.write("t.10", '<... openat resumed>) = 3\n')
         with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
             trace_events(trace)
+
+    def test_split_args_preserves_commas_in_quoted_and_nested_values(self):
+        args = r'AT_FDCWD, "name,\"quoted,part\".h", [1, 2], {fd=3, path="x,y"}, O_RDONLY'
+        self.assertEqual(split_args(args), [
+            'AT_FDCWD', r'"name,\"quoted,part\".h"', '[1, 2]',
+            '{fd=3, path="x,y"}', 'O_RDONLY',
+        ])
 
     def test_missing_child_trace_is_not_silently_accepted(self):
         self.traces()
