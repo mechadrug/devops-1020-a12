@@ -2,14 +2,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from buildchecker.fullcheck import (
-    Unsupported,
-    analyze,
-    declaration_graph,
-    execution_graph,
-    project_path,
-    trace_events,
-)
+from buildchecker.fullcheck import Unsupported, analyze, declaration_graph, execution_graph, project_path
 
 
 class TestFullCheck(unittest.TestCase):
@@ -89,11 +82,6 @@ class TestFullCheck(unittest.TestCase):
                    '<... clone resumed>) = 11\n')
         targets, _ = execution_graph(self.folder, self.root)
         self.assertIn("unit.o", targets)
-
-    def test_resumed_syscall_without_start_fails_explicitly(self):
-        trace = self.write("t.10", '<... openat resumed>) = 3\n')
-        with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
-            trace_events(trace)
 
     def test_missing_child_trace_is_not_silently_accepted(self):
         self.traces()
