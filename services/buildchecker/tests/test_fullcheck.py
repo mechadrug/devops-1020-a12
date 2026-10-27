@@ -2,7 +2,15 @@
 import tempfile
 import unittest
 from pathlib import Path
-from buildchecker.fullcheck import Unsupported, analyze, declaration_graph, execution_graph
+from buildchecker.fullcheck import (
+    Unsupported,
+    analyze,
+    declaration_graph,
+    execution_graph,
+    project_path,
+    split_args,
+    trace_events,
+)
 
 
 class TestFullCheck(unittest.TestCase):
@@ -83,6 +91,28 @@ class TestFullCheck(unittest.TestCase):
         targets, _ = execution_graph(self.folder, self.root)
         self.assertIn("unit.o", targets)
 
+    def test_split_args_preserves_commas_in_quoted_and_nested_values(self):
+        args = r'AT_FDCWD, "name,\"quoted,part\".h", [1, 2], {fd=3, path="x,y"}, O_RDONLY'
+        self.assertEqual(split_args(args), [
+            'AT_FDCWD', r'"name,\"quoted,part\".h"', '[1, 2]',
+            '{fd=3, path="x,y"}', 'O_RDONLY',
+        ])
+
+    def test_nested_unfinished_syscall_is_rejected(self):
+        trace = self.write("t.10", 'openat(AT_FDCWD, "a", O_RDONLY <unfinished ...>\n'
+                                   'openat(AT_FDCWD, "b", O_RDONLY <unfinished ...>\n')
+        with self.assertRaisesRegex(Unsupported, "Nested unfinished"):
+            trace_events(trace)
+
+    def test_merged_unfinished_syscall_keeps_start_line(self):
+        trace = self.write("t.10", 'openat(AT_FDCWD, "a", O_RDONLY <unfinished ...>\n'
+                                   '<... openat resumed>) = 3\n')
+        events = trace_events(trace)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["call"], "openat")
+        self.assertEqual(events[0]["return"], 3)
+        self.assertEqual(events[0]["line"], 1)
+
     def test_missing_child_trace_is_not_silently_accepted(self):
         self.traces()
         (self.folder / "t.12").unlink()
@@ -109,46 +139,26 @@ class TestFullCheck(unittest.TestCase):
         with self.assertRaisesRegex(Unsupported, "Files section"):
             declaration_graph(db, self.root)
 
+    def test_parent_relative_paths_normalize_but_cannot_escape_project_root(self):
+        self.assertEqual(project_path("../src/unit.h", "/course/project/build", self.root),
+                         "src/unit.h")
+        self.assertIsNone(project_path("../../etc/passwd", "/course/project/build", self.root))
+        self.assertIsNone(project_path("/course/project-other/secret.h", "/course/project/build",
+                                       self.root))
 
-if __name__ == "__main__":
-    unittest.main()
+class TestResumedSyscallWithoutStart(unittest.TestCase):
+    """A12 E5-E7 扩展测试（选项 A）：无起点 resumed 系统调用必须显式拒绝"""
 
-import tempfile
-from pathlib import Path
+    def test_resumed_syscall_without_start_fails_explicitly(self):
+        import tempfile
+        from pathlib import Path
+        from buildchecker.fullcheck import trace_events, Unsupported
 
-import tempfile
-from pathlib import Path
-
-import tempfile
-from pathlib import Path
-
-import tempfile
-from pathlib import Path
-
-
-class TestResumedSyscallUnsupported(unittest.TestCase):
-    """A12 E5-E7 扩展测试（选项 A）：无起点 resumed 系统调用必须报错
-
-    背景：strace 输出中出现 <... openat resumed> 而没有对应的前一行
-    已开始执行的 openat（即无起点 resumed）时，execution_graph 必须
-    抛出异常，而不是静默放行或误判为正常流程。
-    """
-
-    def test_resumed_syscall_without_start_raises_unsupported(self):
-        from buildchecker.fullcheck import execution_graph
-
-        trace_dir = Path(tempfile.mkdtemp())
-        (trace_dir / "t.17").write_text(
-            '101 openat(AT_FDCWD, "config.h", O_RDONLY|O_NOCTTY) = 4\n'
-            '102 <... openat resumed>)\n'
-        )
-        root = Path(tempfile.mkdtemp())
-
-        with self.assertRaises(Exception) as cm:
-            execution_graph(trace_dir, root)
-        msg = str(cm.exception)
-        self.assertIn("Resumed", msg)
-        self.assertIn("start", msg)
+        d = Path(tempfile.mkdtemp())
+        p = d / "t.10"
+        p.write_text('<... openat resumed>) = 3\n')
+        with self.assertRaisesRegex(Unsupported, "Resumed syscall without start"):
+            trace_events(str(p))
 
 
 if __name__ == "__main__":
