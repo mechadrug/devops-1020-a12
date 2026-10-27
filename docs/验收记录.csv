@@ -3,8 +3,8 @@ C01,共同,环境,云主机与Docker,PASS,work/build-03/env.json,Ubuntu 22.04.5 
 C02,共同,E5,真实复现与差异,PASS,work/e5-01/evidence/,程序输出 1；MD main.o→config.h；RD main.o→unused.h
 C03,共同,E6,输入哈希报告日志,PASS,work/e6-before/evidence/;work/e6-after/evidence/,findings 2→0；仅 Makefile 哈希变化；verify passed
 C04,共同,E7,自主扩展测试,PASS,services/buildchecker/tests/test_fullcheck.py,路径规范化与逃逸边界；服务测试 16 passed
-C05,共同,CI,正常失败恢复及artifact,PENDING,,待 CI 平台确认后填写
-C06,共同,CI,必需检查与实际拒绝合并,PENDING,,待 CI 平台确认后填写
+C05,共同,CI,正常失败恢复及artifact,PASS,work/ci-normal/;work/ci-rejection/;work/ci-recovery/,正常 40470873771；失败 40470996941；恢复 40471128279；artifact 已下载
+C06,共同,CI,必需检查与实际拒绝合并,PASS,work/ci-rejection/protection.json;work/ci-rejection/merge-rejection.log;work/ci-recovery/PR-merged.json,必需检查 e7-a-quality-gate/app15368；merge exit=1；PR #1 MERGED 55303c7
 A01,A,E6,MD/RD精确证据与修复,PASS,work/e6-before/evidence/findings.json,MD main.o→config.h；RD main.o→unused.h；修复后 findings=[]
 A02,A,E7,三次一致及故障场景,PASS,work/e7-02/gate/gate-result.json,8/8 passed；original-1/2/3 错误集合完全一致
 B01,B,E5,缺失make及候选来源,N/A,,A 轨道不涉及

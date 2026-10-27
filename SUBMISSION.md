@@ -8,8 +8,10 @@
 | 小组 / 轨道 | A12 / A（BuildChecker） |
 | A12 服务器 | 118.31.65.25（Ubuntu 22.04.5 LTS，x86_64，2 vCPU / 3.5 GiB / 70.2 GiB 可用） |
 | 本人工作目录 | `/root/231880224/e5-7/DevOps_1020_Student_Cloud/labs/A-buildchecker` |
-| 仓库地址 | 待 CI 仓库确定后填写 |
+| 仓库地址 | https://github.com/mechadrug/devops-1020-a12 |
 | 被测代码提交 SHA | `809f7f6755de0847b2097fdcb631a53ca839cdcc` |
+| CI 修复后合并提交 | `4b4a64f155043b87cc59bdbcdb2e83df3bb77cfc` |
+| main 合并提交 | `55303c7ebf2eb5543876cd8a5fcf5c8abe52160f` |
 | 服务镜像 | `course1020-buildchecker:local` |
 | 镜像 ID | `sha256:3447b9d175d351d020a23c548f1fbba6c51da8bc3adca87e48fab376e076aaa1` |
 | 依赖锁文件 | `requirements-dev.lock`（sha256 `24f54d917487599d98e13c5733a75ca4a86652fa11cdccaf863c08e1cc66f5df`） |
@@ -64,11 +66,23 @@ python3 scripts/lab_cloud.py gate --out work/e7-02                            # 
 - `work/e5-01/evidence/`：`program-output.txt`、`make-db.txt`、`trace/`、`build-stderr.log`
 - `work/e6-before/evidence/`、`work/e6-after/evidence/`：`findings.json`、`actual-graph.json`、`declared-graph.json`、`processes.json`、`make-db.txt`、`trace/`
 - `work/e7-02/gate/`：`gate-result.json`、`results.csv`、`unit-tests/`、`original-1/2/3/`、`fixed/`、`build-failed/`、`unsupported/`、`timeout/`
+- `work/ci-normal/`、`work/ci-rejection/`、`work/ci-recovery/`：正常/失败/恢复 run 的 artifact、保护配置、拒绝合并日志、PR 状态与合并记录
 - `docs/实验报告.md`、`docs/验收记录.csv`
 
 ## CI 与合并门禁
 
-待补：正常 / 失败 / 恢复 run URL、artifact 相对路径、main 分支保护配置、拒绝合并日志、修复后 MERGED 记录。
+仓库 `https://github.com/mechadrug/devops-1020-a12`（公开），工作流检查名 `e7-a-quality-gate`，App ID `15368`。
+
+| 阶段 | 记录 |
+| --- | --- |
+| 正常 CI | run 40470873771，提交 `2416d8a`，success |
+| main 保护 | 必需检查 `e7-a-quality-gate`/15368；`strict=true`、`enforce_admins=true`、审批 0；见 `work/ci-rejection/protection.json` |
+| 故意失败 PR | PR #1，head `d03de7f`，run 40470996941 failure；`1 failed, 16 passed`，`assert 0 == 1`；见 `work/ci-rejection/failed-check.log` |
+| 实际拒绝合并 | `gh pr merge 1 --merge` 退出码 1；PR `OPEN / BLOCKED`；见 `work/ci-rejection/merge-rejection.log`、`PR.json` |
+| 修复后恢复 | head `4b4a64f`，run 40471128279 success；`17 passed`；PR `CLEAN`；见 `work/ci-recovery/artifacts-40471128279/` |
+| 最终合并 | 2026-10-27T08:06:16Z 合并，merge commit `55303c7`；见 `work/ci-recovery/PR-merged.json` |
+
+失败原因是故意写错测试预期（`version` 期望 1，实际 0），修复只改测试预期，未改检测算法。
 
 ## 说明
 
