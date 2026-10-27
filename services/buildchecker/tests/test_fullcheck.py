@@ -112,3 +112,53 @@ class TestFullCheck(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+cat >> services/buildchecker/tests/test_fullcheck.py << 'PY'
+
+
+class TestResumedSyscallUnsupported(unittest.TestCase):
+    """A12 E5-E7 扩展测试（选项 A）：无起点 resumed 系统调用必须报错
+
+    背景：strace 输出中出现 <... openat resumed> 而没有对应的前一行
+    已开始执行的 openat（即无起点 resumed）时，execution_graph 必须
+    抛出异常，而不是静默放行或误判为正常流程。
+    """
+
+    def test_resumed_syscall_without_start_raises_unsupported(self):
+        from buildchecker.fullcheck import execution_graph
+
+        trace_lines = [
+            '101 openat(AT_FDCWD, "config.h", O_RDONLY|O_NOCTTY) = 4',
+            '102 <... openat resumed>)',
+        ]
+
+        try:
+            execution_graph(trace_lines)
+            self.fail("无起点 resumed 系统调用不应放行，应抛出异常")
+        except Exception as e:
+            self.assertIn("Resumed", str(e))
+            self.assertIn("start", str(e))
+
+
+class TestResumedSyscallUnsupported(unittest.TestCase):
+    """A12 E5-E7 扩展测试（选项 A）：无起点 resumed 系统调用必须报错
+
+    背景：strace 输出中出现 <... openat resumed> 而没有对应的前一行
+    已开始执行的 openat（即无起点 resumed）时，execution_graph 必须
+    抛出异常，而不是静默放行或误判为正常流程。
+    """
+
+    def test_resumed_syscall_without_start_raises_unsupported(self):
+        from buildchecker.fullcheck import execution_graph
+
+        trace_lines = [
+            '101 openat(AT_FDCWD, "config.h", O_RDONLY|O_NOCTTY) = 4',
+            '102 <... openat resumed>)',
+        ]
+
+        try:
+            execution_graph(trace_lines)
+            self.fail("无起点 resumed 系统调用不应放行，应抛出异常")
+        except Exception as e:
+            self.assertIn("Resumed", str(e))
+            self.assertIn("start", str(e))
