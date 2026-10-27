@@ -2,7 +2,14 @@
 import tempfile
 import unittest
 from pathlib import Path
-from buildchecker.fullcheck import Unsupported, analyze, declaration_graph, execution_graph, project_path
+from buildchecker.fullcheck import (
+    Unsupported,
+    analyze,
+    declaration_graph,
+    execution_graph,
+    project_path,
+    split_args,
+)
 
 
 class TestFullCheck(unittest.TestCase):
@@ -82,6 +89,13 @@ class TestFullCheck(unittest.TestCase):
                    '<... clone resumed>) = 11\n')
         targets, _ = execution_graph(self.folder, self.root)
         self.assertIn("unit.o", targets)
+
+    def test_split_args_preserves_commas_in_quoted_and_nested_values(self):
+        args = r'AT_FDCWD, "name,\"quoted,part\".h", [1, 2], {fd=3, path="x,y"}, O_RDONLY'
+        self.assertEqual(split_args(args), [
+            'AT_FDCWD', r'"name,\"quoted,part\".h"', '[1, 2]',
+            '{fd=3, path="x,y"}', 'O_RDONLY',
+        ])
 
     def test_missing_child_trace_is_not_silently_accepted(self):
         self.traces()
