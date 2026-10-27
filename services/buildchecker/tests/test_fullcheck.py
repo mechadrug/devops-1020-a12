@@ -9,6 +9,7 @@ from buildchecker.fullcheck import (
     execution_graph,
     project_path,
     split_args,
+    trace_events,
 )
 
 
@@ -96,6 +97,21 @@ class TestFullCheck(unittest.TestCase):
             'AT_FDCWD', r'"name,\"quoted,part\".h"', '[1, 2]',
             '{fd=3, path="x,y"}', 'O_RDONLY',
         ])
+
+    def test_nested_unfinished_syscall_is_rejected(self):
+        trace = self.write("t.10", 'openat(AT_FDCWD, "a", O_RDONLY <unfinished ...>\n'
+                                   'openat(AT_FDCWD, "b", O_RDONLY <unfinished ...>\n')
+        with self.assertRaisesRegex(Unsupported, "Nested unfinished"):
+            trace_events(trace)
+
+    def test_merged_unfinished_syscall_keeps_start_line(self):
+        trace = self.write("t.10", 'openat(AT_FDCWD, "a", O_RDONLY <unfinished ...>\n'
+                                   '<... openat resumed>) = 3\n')
+        events = trace_events(trace)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["call"], "openat")
+        self.assertEqual(events[0]["return"], 3)
+        self.assertEqual(events[0]["line"], 1)
 
     def test_missing_child_trace_is_not_silently_accepted(self):
         self.traces()
