@@ -39,4 +39,53 @@ class ProfileTests(unittest.TestCase):
         (self.p/'Makefile').write_text((self.p/'Makefile').read_text().replace('-O0','-include unknown.h'))
         with self.assertRaisesRegex(ValueError,'UNSUPPORTED_FLAGS'):scan(self.p)
 
+class StudentE8A231880398(unittest.TestCase):
+    def test_declaration_change_reuses_actual_graph(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            old=scan(p)
+            f=p/'Makefile'
+            f.write_text(f.read_text().replace('main.c unused.h','main.c unused.h config.h'))
+            commit(p,'student: add missing declaration')
+            result=scan(p,old)
+            self.assertEqual(result['actual'],old['actual'])
+            self.assertEqual(set(result['reused']),{'main.o','helper.o'})
+            self.assertEqual(result['refreshed'],[])
+            self.assertEqual(
+                {(x['type'],x['target'],x['dependency']) for x in result['findings']},
+                {('REDUNDANT','main.o','unused.h')})
+
+class StudentE9A231880398(unittest.TestCase):
+    def test_header_include_invalidates_and_refreshes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            old=scan(p)
+            f=p/'main.c'
+            f.write_text('#include "extra.h"\n'+f.read_text())
+            commit(p,'student: add include')
+            result=scan(p,old)
+            self.assertIn('extra.h', result['actual']['main.o'])
+            self.assertIn('main.o', result['refreshed'])
+            self.assertEqual(result['reused'], [])
+            self.assertNotEqual(result.get('status'), 'ERROR')
+
+class StudentE10A231880398(unittest.TestCase):
+    def test_transitive_include_incremental_equals_full(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            old=scan(p)
+            (p/'config.h').write_text('#include "extra.h"\n#define VALUE 1\n')
+            commit(p,'student: transitive include')
+            inc=scan(p,old); full=scan(p)
+            self.assertEqual(inc['actual'], full['actual'])
+            self.assertEqual(inc['declared'], full['declared'])
+            self.assertEqual(
+                {(f['type'],f['target'],f['dependency']) for f in inc['findings']},
+                {(f['type'],f['target'],f['dependency']) for f in full['findings']},
+            )
+
+
 if __name__=='__main__':unittest.main()
