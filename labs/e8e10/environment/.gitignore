@@ -1,0 +1,11 @@
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 运行证据：按需挑选后用 git add -f 提交
+work/
+__pycache__/
+.pytest_cache/
