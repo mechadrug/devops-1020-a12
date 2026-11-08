@@ -1,0 +1,29 @@
+name: E8-E10 teaching validation
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  lab:
+    name: e8e10-quality-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build teaching environment
+        run: docker build -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
+      - name: Validate both tracks
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/course" -w /course course-e8e10:ci python3 -m unittest discover -s labs/e8e10 -p test_profile.py -v
+          for track in A B; do
+            for stage in e8 e9 e10; do
+              docker run --rm --network none --cap-add SYS_PTRACE --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/course" -w /course course-e8e10:ci python3 labs/e8e10/lab.py "$stage" --track "$track" --out "/course/work/$track-$stage"
+            done
+          done
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: e8e10-evidence-${{ github.run_id }}
+          path: work/
+          retention-days: 14
