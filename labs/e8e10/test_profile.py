@@ -88,4 +88,78 @@ class StudentE10A231880398(unittest.TestCase):
             )
 
 
+class StudentA231880138(unittest.TestCase):
+    def test_transitive_header_body_change_reuses_known_edges(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            (p/'config.h').write_text('#include "extra.h"\n#define VALUE 1\n')
+            (p/'extra.h').write_text('static inline int extra(void){return 0;}\n')
+            commit(p,'231880138: transitive header baseline')
+            old=scan(p)
+            (p/'extra.h').write_text('static inline int extra(void){return 0+0;}\n')
+            commit(p,'231880138: header body only')
+            result=scan(p,old)
+            self.assertEqual(result['actual'],{
+                'main.o':['config.h','extra.h','main.c'], 'helper.o':['helper.c']})
+            self.assertEqual(result['reused'],['main.o','helper.o'])
+            self.assertEqual(result['refreshed'],[])
+            self.assertEqual(result['added'],[])
+            self.assertEqual(result['resolved'],[])
+            self.assertEqual({(f['type'],f['target'],f['dependency']) for f in result['findings']},{
+                ('MISSING','main.o','config.h'), ('MISSING','main.o','extra.h'),
+                ('REDUNDANT','main.o','unused.h')})
+
+    def test_removing_transitive_header_resolves_only_its_missing_edge(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            (p/'config.h').write_text('#include "extra.h"\n#define VALUE 1\n')
+            (p/'extra.h').write_text('#include "leaf.h"\n#define EXTRA 0\n')
+            (p/'leaf.h').write_text('#define LEAF 7\n')
+            commit(p,'231880138: three-header baseline')
+            old=scan(p)
+            (p/'extra.h').write_text('#define EXTRA 0\n')
+            (p/'leaf.h').unlink()
+            commit(p,'231880138: remove transitive include and file')
+            result=scan(p,old)
+            self.assertEqual(result['actual'],{
+                'main.o':['config.h','extra.h','main.c'], 'helper.o':['helper.c']})
+            self.assertEqual(result['refreshed'],['main.o','helper.o'])
+            self.assertEqual(result['reused'],[])
+            self.assertEqual(result['added'],[])
+            self.assertEqual(result['resolved'],[['MISSING','main.o','leaf.h']])
+            self.assertEqual({(f['type'],f['target'],f['dependency']) for f in result['findings']},{
+                ('MISSING','main.o','config.h'), ('MISSING','main.o','extra.h'),
+                ('REDUNDANT','main.o','unused.h')})
+
+    def test_transitive_declaration_cleanup_reuses_graph_and_resolves_all_findings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'
+            fixture(p)
+            (p/'config.h').write_text('#include "extra.h"\n#define VALUE 1\n')
+            (p/'extra.h').write_text('#include "leaf.h"\n#define EXTRA 0\n')
+            (p/'leaf.h').write_text('#define LEAF 7\n')
+            commit(p,'231880138: declaration cleanup baseline')
+            old=scan(p)
+            makefile=p/'Makefile'
+            makefile.write_text(makefile.read_text().replace(
+                'main.o: main.c unused.h','main.o: main.c config.h extra.h leaf.h'))
+            commit(p,'231880138: declare transitive headers and remove unused edge')
+            result=scan(p,old)
+            full=scan(p)
+            expected={'main.o':['config.h','extra.h','leaf.h','main.c'],'helper.o':['helper.c']}
+            self.assertEqual(result['actual'],expected)
+            self.assertEqual(result['declared'],expected)
+            self.assertEqual(result['reused'],['main.o','helper.o'])
+            self.assertEqual(result['refreshed'],[])
+            self.assertEqual(result['findings'],[])
+            self.assertEqual(result['added'],[])
+            self.assertEqual({tuple(x) for x in result['resolved']},{
+                ('MISSING','main.o','config.h'), ('MISSING','main.o','extra.h'),
+                ('MISSING','main.o','leaf.h'), ('REDUNDANT','main.o','unused.h')})
+            for key in ['actual','declared','findings']:
+                self.assertEqual(result[key],full[key])
+
+
 if __name__=='__main__':unittest.main()
