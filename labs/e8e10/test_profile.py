@@ -162,4 +162,64 @@ class StudentA231880138(unittest.TestCase):
                 self.assertEqual(result[key],full[key])
 
 
+class StudentA231880397(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.p = Path(self.tmp.name) / 'sample'
+        fixture(self.p)
+
+    def test_e8_helper_source_include_is_in_baseline_and_reused(self):
+        helper = self.p / 'helper.c'
+        helper.write_text('#include "extra.h"\n' + helper.read_text())
+        commit(self.p, '231880397: helper include baseline')
+
+        baseline = scan(self.p)
+        self.assertEqual(baseline['actual']['helper.o'], ['extra.h', 'helper.c'])
+        self.assertIn(
+            {'type': 'MISSING', 'target': 'helper.o', 'dependency': 'extra.h'},
+            baseline['findings'],
+        )
+        unchanged = scan(self.p, baseline)
+        self.assertEqual(unchanged['actual'], baseline['actual'])
+        self.assertEqual(unchanged['reused'], ['main.o', 'helper.o'])
+        self.assertEqual(unchanged['refreshed'], [])
+
+    def test_e9_flag_change_exposes_conditional_dependency(self):
+        config = self.p / 'config.h'
+        config.write_text('#ifdef MODE\n#include "extra.h"\n#endif\n#define VALUE 1\n')
+        commit(self.p, '231880397: conditional header baseline')
+        old = scan(self.p)
+        self.assertEqual(old['actual']['main.o'], ['config.h', 'main.c'])
+
+        makefile = self.p / 'Makefile'
+        makefile.write_text(makefile.read_text().replace('CFLAGS = -O0', 'CFLAGS = -O0 -DMODE=1'))
+        commit(self.p, '231880397: enable MODE')
+        updated = scan(self.p, old)
+        self.assertEqual(updated['actual']['main.o'], ['config.h', 'extra.h', 'main.c'])
+        self.assertIn(['MISSING', 'main.o', 'extra.h'], updated['added'])
+        self.assertEqual(updated['refreshed'], ['main.o', 'helper.o'])
+        self.assertEqual(updated['reused'], [])
+
+    def test_e10_conditional_flag_change_matches_full_five_times(self):
+        (self.p / 'config.h').write_text(
+            '#ifdef MODE\n#include "extra.h"\n#endif\n#define VALUE 1\n'
+        )
+        commit(self.p, '231880397: conditional matrix baseline')
+        old = scan(self.p)
+        makefile = self.p / 'Makefile'
+        makefile.write_text(makefile.read_text().replace('CFLAGS = -O0', 'CFLAGS = -O0 -DMODE=1'))
+        commit(self.p, '231880397: conditional matrix changed')
+
+        for _ in range(5):
+            incremental = scan(self.p, old)
+            full = scan(self.p)
+            self.assertEqual(incremental['actual'], full['actual'])
+            self.assertEqual(incremental['declared'], full['declared'])
+            self.assertEqual(incremental['findings'], full['findings'])
+            self.assertEqual(incremental['added'], [
+                ['MISSING', 'main.o', 'extra.h']
+            ])
+
+
 if __name__=='__main__':unittest.main()
