@@ -162,4 +162,66 @@ class StudentA231880138(unittest.TestCase):
                 self.assertEqual(result[key],full[key])
 
 
+class StudentE8A231880224(unittest.TestCase):
+    def test_declaration_cleanup_reuses_actual_graph(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'; fixture(p)
+            old=scan(p)
+            makefile=p/'Makefile'
+            makefile.write_text(makefile.read_text().replace(
+                'main.o: main.c unused.h','main.o: main.c config.h'))
+            commit(p,'student: declare config and drop unused')
+            result=scan(p,old)
+            self.assertEqual(result['actual'],old['actual'])
+            self.assertEqual(result['declared']['main.o'],['config.h','main.c'])
+            self.assertEqual(result['reused'],['main.o','helper.o'])
+            self.assertEqual(result['refreshed'],[])
+            self.assertEqual(result['findings'],[])
+            self.assertEqual({tuple(x) for x in result['resolved']},{
+                ('MISSING','main.o','config.h'),('REDUNDANT','main.o','unused.h')})
+
+
+class StudentE9A231880224(unittest.TestCase):
+    def test_indirect_header_chain_invalidates_cache(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'; fixture(p)
+            old=scan(p)
+            (p/'config.h').write_text('#include "extra.h"\n#define VALUE 1\n')
+            (p/'extra.h').write_text('#include "leaf.h"\n#define EXTRA 0\n')
+            (p/'leaf.h').write_text('#define LEAF 7\n')
+            commit(p,'student: header chain adds leaf')
+            result=scan(p,old); full=scan(p)
+            self.assertEqual(result['actual']['main.o'],['config.h','extra.h','leaf.h','main.c'])
+            self.assertEqual(result['reused'],[])
+            self.assertEqual(set(result['refreshed']),{'main.o','helper.o'})
+            self.assertEqual({tuple(x) for x in result['added']},{
+                ('MISSING','main.o','extra.h'),('MISSING','main.o','leaf.h')})
+            for key in ['actual','declared','findings']:
+                self.assertEqual(result[key],full[key])
+
+
+class StudentE10A231880224(unittest.TestCase):
+    def test_flags_change_refresh_matches_full_five_times(self):
+        from statistics import median
+        with tempfile.TemporaryDirectory() as directory:
+            p=Path(directory)/'sample'; fixture(p)
+            old=scan(p)
+            makefile=p/'Makefile'
+            makefile.write_text(makefile.read_text().replace('-O0','-O1'))
+            commit(p,'student: switch optimisation level')
+            incremental=[]; full_times=[]
+            for _ in range(5):
+                incremental_result=scan(p,old); full_result=scan(p)
+                for key in ['actual','declared','findings']:
+                    self.assertEqual(incremental_result[key],full_result[key])
+                self.assertEqual(incremental_result['reused'],[])
+                self.assertEqual(incremental_result['refreshed'],['main.o','helper.o'])
+                self.assertEqual({(x['type'],x['target'],x['dependency']) for x in incremental_result['findings']},
+                    {('MISSING','main.o','config.h'),('REDUNDANT','main.o','unused.h')})
+                incremental.append(incremental_result['elapsed_s'])
+                full_times.append(full_result['elapsed_s'])
+            self.assertGreater(median(incremental),0)
+            print('STUDENT_E10_MEDIANS',median(incremental),median(full_times))
+
+
 if __name__=='__main__':unittest.main()
