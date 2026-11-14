@@ -1,0 +1,9 @@
+{
+  "mode": "e12",
+  "repo": "/course/data/real-project",
+  "base": "614c99434b7774f271f95d0db4726ddfc96db1c5",
+  "target": "106a2402eb85e6ccf5ce71a03ff8196bbbcad4a0",
+  "candidate": "/course/data/real-candidate.Dockerfile",
+  "expected_output": "1",
+  "build_timeout": 600
+}
