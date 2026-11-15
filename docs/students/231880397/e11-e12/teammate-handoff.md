@@ -1,34 +1,37 @@
-# E11–E12 同伴操作手册（A12）
+# E11–E12 A 组同伴操作手册（A12）
 
-截至 2026-11-15，A 侧代码在 [PR #14](https://github.com/mechadrug/devops-1020-a12/pull/14)，E7、E8–E10、E11–E12 的 CI 均通过。课程服务器为 `118.31.65.25`；个人仓库位于 `/root/devops-students/231880397/buildchecker`，原始证据归档位于 `/root/devops-submissions/231880397/E11-E12-231880397-server-20261115.tar.gz`。服务器 API 使用 **8081**，实验包手册里的示例端口 **8080** 需要相应替换。
+截至 2026-11-15，A 组代码在 [PR #14](https://github.com/mechadrug/devops-1020-a12/pull/14)，E7、E8–E10、E11–E12 的 CI 已通过。我的服务器仓库位于 `/root/devops-students/231880397/buildchecker`，完整原始证据在 `/root/devops-submissions/231880397/E11-E12-231880397-server-20261115.tar.gz`。A 侧任务 API 使用服务器回环地址 `127.0.0.1:8081`，实验包手册默认写的是 8080。
 
-## A 组同伴：审阅与个人任务
+## 组长或审阅同学
 
-1. 在 PR #14 审阅代码、报告、ADR 和请求清单；组长按课程流程合并。个人实验在各自仓库和分支进行，镜像按学号命名，`work/` 下使用独立目录。
-2. E11-A 可参照 `work/e11-a-personal-231880397/`：基线完整图来自 BuildChecker 的 `strace`，目标增量发现与目标全量发现对照。记录完整 C0/C1 SHA、`refreshed`、`reused`、MD/RD 和差异原因。
-3. 现有 E8 扫描器采用全局缓存键。本次源文件新增头文件指令时 `main.o`、`helper.o` 都刷新，`reused=[]`。请按实际输出记录，不要把它写成按目标复用。
+1. 审阅 PR #14 的 `run_e11e12.py`、`labs/e11e12/`、工作流，以及 `docs/students/231880397/e11-e12/` 下的报告、契约和 ADR。确认本组的提交范围后按课程流程合并。
+2. 检查服务器归档中的 `work/e11-a-231880397/`、`work/e11-a-personal-231880397/`、`work/e12-231880397/` 和 `work/e12-real-231880397/`。重点核对基线真实 `strace` 图、目标增量与全量发现一致、报告 commit、job_id/trace_id 和 artifact SHA256。
+3. 我的项目数据来自 A12 既有 `fixtures/md-rd`，适配成双源 C/Make 教学规模项目；来源和两个完整提交 SHA 写在 `requests/real-dataset.json`。如果老师要求另一个组内实际项目，请确定仓库地址、C0/C1 完整 SHA 和候选 Dockerfile，再交给负责接入的同学。
 
-## B 组同伴：完成独立实现与跨机联调
+## 需要完成个人 A 组实验的同学
 
-1. 在自己的服务器或独立工作目录跑 E11-B：DRAFT 实际构建并运行镜像，消费与目标提交一致的**固定 MD 报告**，由 MDFixer 生成补丁、验证、重检。保存构建日志、固定报告、补丁、`validation.json` 和失败案例。
-2. E12 使用 A 侧本轮 `incremental-check.json` 及其 SHA256，核对报告内外层 `commit` 均为目标提交，再交给 B 侧修复。保存修复输入、补丁、复验结果。若要验收 B 组**独立代码**，请提供 B 侧镜像或执行入口及产物格式；当前 A 侧 API 调用的是实验包内置适配器。
-3. 从另一台机器建立 SSH 转发（将账号替换成自己的课程账号，**不要在群里发送密码**）：
+在**自己的**仓库、分支、镜像标签和 `work/` 目录操作。先取得合并后的 E11–E12 代码；不要切换或修改 `/root/devops-students/231880397/buildchecker` 的个人分支。`run_e11e12.py` 要求本仓库的 `git config --local user.name` 为自己的数字学号。
 
-   ```bash
-   ssh -N -L 18081:127.0.0.1:8081 <课程账号>@118.31.65.25
-   ```
+```bash
+cd /root/devops-students/<你的学号>/buildchecker
+git config --local user.name <你的学号>
+python3 run_e11e12.py build
+python3 run_e11e12.py test
+python3 run_e11e12.py prepare
+python3 run_e11e12.py run --request data/integration-sample/e11-a.json --out work/e11-a-<你的学号>-01
+```
 
-   在另一个终端检查：
+`prepare` 仅在该仓库首次创建样例时执行；已有 `data/integration-sample` 时直接复用。`--out` 必须是新的目录。查看 `result.json`、`baseline-full/actual-graph.json`、`baseline-cache.json`、`incremental-report.json`、`target-full/findings.json`，确认 `SUCCEEDED` 且增量/全量发现相同。
 
-   ```bash
-   curl -fsS http://127.0.0.1:18081/health
-   ```
+随后自行创建一个目标提交，更新请求 JSON 的完整 base/target SHA，用新的 `work/` 目录再次运行 E11-A。报告写明哪些目标 `refreshed`、哪些 `reused`、新增或消失的 MD/RD 及原因。当前 E8 扫描器使用全局缓存键；我增加头文件指令的案例中两个目标均刷新、`reused=[]`，应按实际输出如实记录。
 
-   若服务停止，由 A 侧在上述个人仓库先检查 `curl http://127.0.0.1:8081/health`，确认端口空闲后执行 `python3 run_e11e12.py serve --port 8081`。8081 只绑定服务器回环地址，无需开放公网端口。
-4. 将请求里的 `repo`、`candidate` 等路径设为 **API 服务器上的 `/course/data/` 路径**，使用完整 base/target SHA。文件应先上传到 A 侧服务器的 `data/` 独立子目录；本机路径对 API 无效。每次新实验使用新的 `idempotency_key`。以 `POST /v1/jobs` 提交，`GET /v1/jobs/<job_id>` 轮询，`GET /v1/jobs/<job_id>/artifacts` 取清单，`GET /v1/jobs/<job_id>/files/candidate.patch` 下载补丁并核对 `X-Content-SHA256`。完整命令见实验包 `02_操作手册/02_E12接口联调.md`，远程访问时把示例 `127.0.0.1:8080` 换为本机 `127.0.0.1:18081`。
+E12 的 A 组交付是基线全量图、目标增量图和当前 MD/RD 报告。将报告的 schema、commit、job_id、trace_id、artifact URI/SHA256 与目标提交核对，再交给联调同学消费。对接 API 时从课程服务器本机先检查 `curl -fsS http://127.0.0.1:8081/health`；API 仅绑定回环地址，跨机访问按实验包 `02_操作手册/02_E12接口联调.md` 建立 SSH 转发，并将示例服务端口 8080 改成 8081。
 
-## 项目数据与提交证据
+## 每人的提交材料
 
-- 当前 `data/real-project` 是从 A12 既有 `fixtures/md-rd` 派生的双源教学规模项目；来源、适配步骤、完整提交号见 `requests/real-dataset.json`。若教师要求组内独立维护的其他实际项目，请提供仓库地址、C0/C1 完整 SHA、候选 Dockerfile；当前扫描接口要求 `main.c`、`helper.c`、`config.h` 和显式 Make 规则，其他结构需先适配。
-- 联调记录至少包含请求 JSON、输入 SHA、`job_id`、`trace_id`、各阶段 `commit`、产物 URI/SHA256、补丁、验证日志与最终结果。相同幂等键及相同输入应返回同一任务；同键改输入应返回 409。
-- 分工完成后，请在各自 PR 或报告中给出证据路径，并与 A 侧 PR #14 关联。完整课堂说明见实验包 `02_操作手册/00_公共准备.md`、`01_E11轨道内集成.md`、`02_E12接口联调.md`、`03_真实项目接入与验收.md`、`04_GitHub提交与CI.md`。
+- 个人分支和 PR、完整 C0/C1 SHA、请求 JSON、数据来源说明。
+- E11-A 的 `result.json`、全量图与原始日志、增量报告、全量对照、刷新/复用解释。
+- E12 A 侧报告及其版本、job_id/trace_id、产物 URI/SHA256；若参与联调，附上请求、状态和最终验收记录。
+- 个人报告和至少一项与本人改动对应的适配或契约测试。大型 `data/`、`work/` 证据单独归档，PR 中写明归档位置。
+
+完整课堂步骤见实验包 `02_操作手册/00_公共准备.md`、`01_E11轨道内集成.md`、`02_E12接口联调.md`、`03_真实项目接入与验收.md`、`04_GitHub提交与CI.md`。
