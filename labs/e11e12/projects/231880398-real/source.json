@@ -1,0 +1,10 @@
+{
+  "source_repo": "https://github.com/mechadrug/devops-1020-a12",
+  "source_path": "fixtures/md-rd",
+  "source_commit": "7fc3b30",
+  "derivation": "Copied the A12 fixture and adapted it to the documented two-source Make profile; commits C0/C1 were created independently by 231880398.",
+  "base_commit": "a0bdb095ee151d10f028fe9aae59cc6d9088a920",
+  "target_commit": "b54258399c066b44432a165f8a614bc99e87a5b7",
+  "target_change": "helper.c newly includes config.h; helper.o Make rule omits config.h",
+  "generated_classroom_sample": false
+}

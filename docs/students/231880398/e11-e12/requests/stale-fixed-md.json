@@ -1,0 +1,96 @@
+{
+  "schema_version": "e11e12-1",
+  "kind": "fixed-md",
+  "status": "SUCCEEDED",
+  "commit": "f540209c8a2a53daa57a71f285147d2c9e3883a3",
+  "data": {
+    "schema_version": "e8e10-1",
+    "profile": "GCC_LOCAL_HEADERS_EXPLICIT_MAKE",
+    "commit": "f540209c8a2a53daa57a71f285147d2c9e3883a3",
+    "key": {
+      "directives": {
+        "config.h": [
+          "#define VALUE 1"
+        ],
+        "extra.h": [
+          "#define EXTRA 0"
+        ],
+        "helper.c": [],
+        "main.c": [
+          "#include \"extra.h\"",
+          "#include <stdio.h>",
+          "#include \"config.h\""
+        ],
+        "unused.h": []
+      },
+      "recipes": [
+        "\tgcc main.o helper.o -o app",
+        "\tgcc $(CFLAGS) -c main.c -o main.o",
+        "\tgcc $(CFLAGS) -c helper.c -o helper.o",
+        "\trm -f main.o helper.o app"
+      ],
+      "flags": "-O0",
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0"
+    },
+    "actual": {
+      "main.o": [
+        "config.h",
+        "extra.h",
+        "main.c"
+      ],
+      "helper.o": [
+        "helper.c"
+      ]
+    },
+    "declared": {
+      "main.o": [
+        "main.c",
+        "unused.h"
+      ],
+      "helper.o": [
+        "helper.c"
+      ]
+    },
+    "findings": [
+      {
+        "type": "MISSING",
+        "target": "main.o",
+        "dependency": "config.h"
+      },
+      {
+        "type": "MISSING",
+        "target": "main.o",
+        "dependency": "extra.h"
+      },
+      {
+        "type": "REDUNDANT",
+        "target": "main.o",
+        "dependency": "unused.h"
+      }
+    ],
+    "added": [
+      [
+        "MISSING",
+        "main.o",
+        "config.h"
+      ],
+      [
+        "MISSING",
+        "main.o",
+        "extra.h"
+      ],
+      [
+        "REDUNDANT",
+        "main.o",
+        "unused.h"
+      ]
+    ],
+    "resolved": [],
+    "refreshed": [
+      "main.o",
+      "helper.o"
+    ],
+    "reused": [],
+    "elapsed_s": 0.014544106999991868
+  }
+}

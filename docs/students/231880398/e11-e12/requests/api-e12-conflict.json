@@ -1,0 +1,13 @@
+{
+  "idempotency_key": "e12-231880398-01",
+  "input": {
+    "mode": "e12",
+    "repo": "/course/data/integration-sample/repo",
+    "base": "f540209c8a2a53daa57a71f285147d2c9e3883a3",
+    "target": "f65ce437a15039681aa8120266ec7c314922f9fa",
+    "candidate": "/course/data/integration-sample/candidate.Dockerfile",
+    "fixed_report": "/course/data/integration-sample/fixed-md.json",
+    "expected_output": "1",
+    "build_timeout": 600
+  }
+}
