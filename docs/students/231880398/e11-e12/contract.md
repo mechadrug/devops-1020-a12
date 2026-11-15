@@ -16,6 +16,7 @@
 |---|---|
 | 外层/内层版本与 commit | `work/e12-231880398/full-check.json`、`incremental-check.json`、`recheck.json` |
 | artifact SHA 与相对 URI | `work/e12-231880398/result.json`、`work/api-e12-231880398/artifacts.json` |
+| 同键同输入返回同一 job | `work/api-e12-231880398/replay.status` / `replay.json` |
 | 同键不同输入 409 | `work/api-e12-231880398/conflict.status` / `conflict.json` |
 | 路径穿越 404 | `work/api-e12-231880398/traversal.status` / `traversal.json` |
 | 旧报告 `STALE_REPORT` | `work/e11-b-stale-231880398/result.json` |
