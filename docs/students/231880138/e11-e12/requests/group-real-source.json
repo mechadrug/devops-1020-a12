@@ -1,0 +1,11 @@
+{
+  "source_repo": "https://github.com/mechadrug/devops-1020-a12",
+  "source_path": "fixtures/md-rd",
+  "source_commit": "7fc3b30",
+  "derivation": "Copied the A12 fixture and adapted it to the documented two-source Make profile; commits C0/C1 were created by 231880397 on this server",
+  "base_commit": "614c99434b7774f271f95d0db4726ddfc96db1c5",
+  "target_commit": "106a2402eb85e6ccf5ce71a03ff8196bbbcad4a0",
+  "target_change": "helper.c newly includes extra.h; helper.o Make rule omits extra.h",
+  "candidate_source": "E11 package candidate with Debian mirror adjusted for course server",
+  "generated_classroom_sample": false
+}
