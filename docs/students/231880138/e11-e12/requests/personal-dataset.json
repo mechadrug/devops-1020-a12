@@ -1,0 +1,13 @@
+{
+  "source": "independent extension of course-generated dataset",
+  "base_commit": "dd208265ff71d7e7327526eb7d12090583657732",
+  "target_commit": "faf1b8b9cff085847cd070ec1a1a2bc507bafc77",
+  "change": "helper.c return 0 -> return 0+0; no directive/configuration change",
+  "expected_reused": [
+    "main.o",
+    "helper.o"
+  ],
+  "expected_refreshed": [],
+  "expected_added": [],
+  "expected_resolved": []
+}
