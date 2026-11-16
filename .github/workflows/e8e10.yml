@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Build teaching environment
-        run: docker build -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
+        run: docker build --build-arg BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74 -f labs/e8e10/environment/services/buildchecker/Dockerfile -t course-e8e10:ci labs/e8e10/environment
       - name: Validate both tracks
         shell: bash
         run: |

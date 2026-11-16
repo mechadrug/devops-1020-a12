@@ -1,0 +1,17 @@
+# 用法：make build / make test / make smoke（Makefile 会设置 STUDENT_ID 和项目名）
+# 也可以直接：STUDENT_ID=<学号> docker compose run --rm buildchecker pytest
+services:
+  buildchecker:
+    build:
+      context: .                              # 仓库根目录，Dockerfile 需要 fixtures/
+      dockerfile: services/buildchecker/Dockerfile
+    image: e4-buildchecker:${STUDENT_ID:-local}
+    network_mode: none                        # 检测只读本地文件，不需要网络
+    cpus: 2
+    mem_limit: 1g
+    pids_limit: 256
+    cap_add:
+      - SYS_PTRACE                            # strace 依赖 ptrace；多数内核默认允许，加上更稳妥
+    security_opt:
+      - no-new-privileges:true
+    # A 组服务不需要密钥，所以没有 env_file
