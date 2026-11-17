@@ -1,0 +1,18 @@
+{
+  "kind": "real-dataset",
+  "derived_from": "labs/e11e12/environment/fixtures/md-rd (single-source C/Make fixture in the A12 repository)",
+  "source_repo": "https://github.com/mechadrug/devops-1020-a12",
+  "source_ref": "student/231880224/e11-e12 base commit 9f121e4 (E11-E12 integration merged via PR #14)",
+  "adaptation_steps": [
+    "add helper.c and call helper() from main.c to meet the dual-source interface",
+    "rewrite Makefile with explicit main.o/helper.o rules and CFLAGS = -O0",
+    "keep extra.h and unused.h to preserve MD/RD cases",
+    "git init with two commits: C0 baseline, C1 adds #include \"extra.h\" in helper.c while helper.o rule stays unchanged"
+  ],
+  "base_commit": "c7e2cb763472b8294f6cf5e34a1ff13850ce2a6d",
+  "target_commit": "ae089b62da3f8c591742c056b6cce50cec487e82",
+  "expected_output": "1",
+  "note": "derived teaching-scale project from a group fixture; not an external production repository",
+  "target_sources": "labs/e11e12/projects/231880224-real/",
+  "full_history": "evidence archive data/real-project (with .git)"
+}
