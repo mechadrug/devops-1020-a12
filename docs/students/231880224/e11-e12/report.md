@@ -1,6 +1,6 @@
 # E11–E12 个人实验报告：A12 / 231880224
 
-日期：2026-11-17。运行位置：A12 课程服务器 `/root/devops-students/231880224/buildchecker`；分支 `student/231880224/e11-e12`；镜像 `course-e11e12:231880224`。本人承担 A 组 BuildChecker→EChecker，并在同一服务器完成 B 侧适配验证与 E12 联调。
+日期：2026-11-17。运行位置：A12 课程服务器 `/root/devops-students/231880224/buildchecker`；分支 `student/231880224/e11-e12`；镜像 `course-e11e12:231880224`。GitHub：https://github.com/mechadrug/devops-1020-a12 （PR #16，e7-a / e8e10 / e11e12 三项 CI 均通过）。本人承担 A 组 BuildChecker→EChecker，并在同一服务器完成 B 侧适配验证与 E12 联调。
 
 ## 来源与两个数据集
 
