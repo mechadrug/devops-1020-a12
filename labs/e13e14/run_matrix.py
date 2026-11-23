@@ -102,8 +102,17 @@ def main(request_path, out):
     timed = run(dict(b_req, build_timeout=0.01), out/'C4-timeout')
     inner = json.loads((out/'C4-timeout/draft-build/result.json').read_text())
     assert timed['status'] != 'SUCCEEDED' and inner['status'] == 'TIMED_OUT', (timed, inner)
-    processes = subprocess.run(['ps','-eo','pid,args'],capture_output=True,text=True,check=True).stdout
-    (out/'C4-processes.txt').write_text(processes)
+    # The pinned slim image has /proc but deliberately does not install procps.
+    process_lines = []
+    for entry in Path('/proc').iterdir():
+        if entry.name.isdigit():
+            try:
+                argv=(entry/'cmdline').read_bytes().replace(b'\0',b' ').decode(errors='replace')
+                process_lines.append(entry.name+' '+argv)
+            except (FileNotFoundError, ProcessLookupError):
+                pass  # A process may exit between directory listing and read.
+    processes='\n'.join(process_lines)+'\n'
+    (out/'C4-processes.txt').write_text('Scope: caller container PID namespace\n'+processes)
     matches = [line for line in processes.splitlines() if 'docker build' in line and str(out/'C4-timeout') in line]
     assert not matches, matches
     containers = subprocess.run(['docker','ps','--no-trunc','--format','{{.ID}} {{.Image}} {{.Names}}'],capture_output=True,text=True,check=True).stdout
