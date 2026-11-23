@@ -1,0 +1,17 @@
+{
+  "repository": "https://git.nju.edu.cn/devops2026fall/devopsB12",
+  "commit": "4950f610a47dbbbf08731eb42c0c621326745ca8",
+  "integration": "Exact upstream Python modules. E14 DRAFT and MDFixer use B12 implementations; A detection remains A12. This does not assert remote B12 participation.",
+  "files": [
+    {
+      "source_path": "labs/e8e10/lab.py",
+      "local_path": "b12_lab.py",
+      "sha256": "2ea527c6d24667f1809f7048b981fd0f682fc29d6b281cd6f313518a57a42312"
+    },
+    {
+      "source_path": "services/draft/draft/autobuild.py",
+      "local_path": "b12_autobuild.py",
+      "sha256": "de90f6a1a9c9c3638354c6842d9b62d363af94a074697561ffeee92c0c6f433c"
+    }
+  ]
+}

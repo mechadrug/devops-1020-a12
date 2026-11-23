@@ -9,8 +9,10 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 sys.path[:0] = ['/course/labs/e8e10', '/course/labs/e11e12/vendor', '/app']
-from lab import scan, patch, validate
-from draft.autobuild import auto_build
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from lab import scan
+from labs.e13e14.vendor.b12_lab import patch, validate
+from labs.e13e14.vendor.b12_autobuild import auto_build
 from buildchecker.fullcheck import full_check
 
 ROOT = Path('/course').resolve()
