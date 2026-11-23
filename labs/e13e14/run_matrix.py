@@ -72,6 +72,12 @@ def main(request_path, out):
     consumed = run(b_req, out/'C1-local-consumer')
     assert consumed['status'] == 'SUCCEEDED', consumed
     assert json.loads((out/'C1-local-consumer/fixed-md-input.json').read_text())['source_report'] == handoff['source_report']
+    for label in ['base-project', 'target-project']:
+        directory = out/'C1-local-consumer'/label
+        if '\ntest:' in '\n'+(directory/'Makefile').read_text():
+            checks = subprocess.run(['make','test'],cwd=directory,capture_output=True,text=True,timeout=60)
+            (out/('C1-'+label+'-behavior.log')).write_text(checks.stdout+checks.stderr)
+            assert checks.returncode == 0, checks
     row('C1', ['C1-A', 'C1-local-consumer'], a_job=current['job_id'],
         consumer_job=consumed['job_id'], remote_B12_signoff='PENDING', report_sha256=digest(report))
 

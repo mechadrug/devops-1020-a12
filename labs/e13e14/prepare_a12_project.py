@@ -81,8 +81,8 @@ print('A12 policy project: 8 behavior cases PASS')
     git('add', '.')
     git('commit', '-m', 'A12 C1: read helper offset through a transitive policy header', date='2026-11-23T14:01:00+08:00')
     target = git('rev-parse', 'HEAD')
-    candidate = dockerfile.replace(BASE_IMAGE, BASE_IMAGE + '@sha256:' + DIGEST).replace('RUN make app',
-        "RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources && apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=3 update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*\nRUN make app")
+    candidate = dockerfile.replace(BASE_IMAGE, BASE_IMAGE + '@sha256:' + DIGEST).replace('COPY . .',
+        "RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources && apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=3 update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*\nCOPY . .")
     (folder / 'candidate.Dockerfile').write_text(candidate, encoding='utf-8', newline='\n')
     dataset = {'provider': 'A12 王备中 231880138', 'source': 'Course two-source shape; independently developed behavior and transitive-header change',
                'base_commit': base, 'target_commit': target, 'tests': 'make test (eight CLI cases)',
