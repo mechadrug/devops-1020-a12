@@ -1,0 +1,68 @@
+name: E13-E14 integration gate
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Python and interface contracts
+        run: |
+          set -euo pipefail
+          python3 -m py_compile labs/e11e12/pipeline.py labs/e13e14/*.py
+          python3 -m unittest discover -s labs/e11e12 -p 'test_contract.py' -v
+          python3 -m unittest discover -s labs/e13e14/tests -p 'test_*.py' -v
+      - name: Compose and source scan
+        run: |
+          set -euo pipefail
+          E14_ROOT="$PWD" E14_IMAGE=course-e11e12:999999999 docker compose -f labs/e13e14/compose.yaml config --quiet
+          python3 scripts/secret_scan.py . --history
+
+  four-services:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Build pinned teaching image
+        run: |
+          set -euo pipefail
+          git config --local user.name 999999999
+          git config --local user.email ci@example.invalid
+          docker build --progress=plain \
+            --build-arg BASE_IMAGE=python:3.13-slim@sha256:f82c96458eedc847b233e582eb31336f4954b39cae020b6dcf5b3ed0e5cbcd74 \
+            --build-arg DOCKER_CLI_IMAGE=docker:28.5.1-cli@sha256:9190b0613792e658a7783cf14b2d5ace5941bb68ede7276922ea36ee457d76ad \
+            -f labs/e11e12/environment/services/buildchecker/Dockerfile \
+            -t course-e11e12:999999999 labs/e11e12/environment
+          python3 run_e11e12.py prepare
+      - name: Start four services and run E2E fixture
+        run: |
+          set -euo pipefail
+          export E14_ROOT="$PWD" E14_IMAGE=course-e11e12:999999999
+          docker compose -f labs/e13e14/compose.yaml -p e14-ci up -d --wait
+          python3 labs/e13e14/orchestrate.py --request data/integration-sample/e12.json --out work/ci-e14
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14
+          docker compose -f labs/e13e14/compose.yaml -p e14-ci logs --no-color > work/ci-e14-services.log
+          python3 labs/e13e14/scan_runtime_logs.py work/ci-e14-services.log
+      - name: Stop only this Compose project
+        if: always()
+        run: |
+          E14_ROOT="$PWD" E14_IMAGE=course-e11e12:999999999 docker compose -f labs/e13e14/compose.yaml -p e14-ci down
+      - name: Preserve evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: e13e14-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: work/
+          if-no-files-found: warn
+          retention-days: 14

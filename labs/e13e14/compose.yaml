@@ -1,0 +1,59 @@
+# Four separate runtime processes. Set E14_ROOT and E14_IMAGE before use.
+x-common: &common
+  image: ${E14_IMAGE:?set E14_IMAGE}
+  pull_policy: never
+  restart: unless-stopped
+  user: "0:0"
+  working_dir: /course
+  environment:
+    PYTHONPATH: /course/labs/e8e10:/course/labs/e11e12/vendor:/app
+    PYTHONDONTWRITEBYTECODE: "1"
+  volumes:
+    - ${E14_ROOT:?set E14_ROOT}:/course
+  cpus: 1.0
+  mem_limit: 768m
+  pids_limit: 128
+  security_opt:
+    - no-new-privileges:true
+  healthcheck:
+    test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+    interval: 5s
+    timeout: 3s
+    retries: 6
+
+services:
+  buildchecker:
+    <<: *common
+    environment:
+      E14_ROLE: buildchecker
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python3", "labs/e13e14/service.py"]
+    ports: ["127.0.0.1:18081:8080"]
+    cap_add: ["SYS_PTRACE"]
+
+  echecker:
+    <<: *common
+    environment:
+      E14_ROLE: echecker
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python3", "labs/e13e14/service.py"]
+    ports: ["127.0.0.1:18082:8080"]
+
+  draft:
+    <<: *common
+    environment:
+      E14_ROLE: draft
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python3", "labs/e13e14/service.py"]
+    ports: ["127.0.0.1:18083:8080"]
+    volumes:
+      - ${E14_ROOT:?set E14_ROOT}:/course
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  mdfixer:
+    <<: *common
+    environment:
+      E14_ROLE: mdfixer
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: ["python3", "labs/e13e14/service.py"]
+    ports: ["127.0.0.1:18084:8080"]
