@@ -3,9 +3,10 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
 import traceback
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer as HTTPServer
 from pathlib import Path
 
 sys.path[:0] = ['/course/labs/e8e10', '/course/labs/e11e12/vendor', '/app']
@@ -17,6 +18,7 @@ from buildchecker.fullcheck import full_check
 
 ROOT = Path('/course').resolve()
 ROLE = os.environ['E14_ROLE']
+ROLE_LOCK = threading.Lock()
 
 
 def local(value, area='work'):
@@ -131,7 +133,10 @@ class Handler(BaseHTTPRequestHandler):
             if length < 1 or length > 100000:
                 raise ValueError('Invalid request size')
             data = json.loads(self.rfile.read(length))
-            result = run(data)
+            # A long build must not block /health. Serialize role mutations,
+            # while the HTTP server can answer independent readiness probes.
+            with ROLE_LOCK:
+                result = run(data)
             print(json.dumps({'role': ROLE, 'job_id': data.get('job_id'),
                               'trace_id': data.get('trace_id'), 'status': 'SUCCEEDED',
                               'elapsed_ms': round((time.monotonic()-start)*1000)}), flush=True)

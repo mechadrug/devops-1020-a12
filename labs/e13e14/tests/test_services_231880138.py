@@ -6,7 +6,9 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import threading
 import unittest
+import urllib.request
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -49,3 +51,36 @@ class ServiceBoundary231880138(unittest.TestCase):
         self.report.write_text(json.dumps(self.document), encoding='utf-8')
         self.request['report_sha256']=hashlib.sha256(self.report.read_bytes()).hexdigest()
         self.rejected_without_writes('identity mismatch')
+
+    def test_health_remains_responsive_during_a_long_role_request(self):
+        entered, release = threading.Event(), threading.Event()
+        def long_job(data):
+            entered.set()
+            if not release.wait(5):
+                raise RuntimeError('Test did not release the worker')
+            return {'status':'SUCCEEDED'}
+        httpd=service.HTTPServer(('127.0.0.1',0),service.Handler)
+        url='http://127.0.0.1:'+str(httpd.server_address[1])
+        runner=threading.Thread(target=httpd.serve_forever,daemon=True)
+        errors=[]
+        def post():
+            try:
+                request=urllib.request.Request(url+'/v1/run',data=b'{}')
+                with urllib.request.urlopen(request,timeout=8) as response:
+                    response.read()
+            except Exception as error:errors.append(error)
+        with patch.object(service,'run',long_job):
+            runner.start()
+            client=threading.Thread(target=post,daemon=True)
+            client.start()
+            try:
+                self.assertTrue(entered.wait(2))
+                with urllib.request.urlopen(url+'/health',timeout=.5) as response:
+                    self.assertEqual(json.load(response)['status'],'ok')
+            finally:
+                release.set()
+                client.join(timeout=8)
+                httpd.shutdown()
+                httpd.server_close()
+                runner.join(timeout=2)
+        self.assertFalse(errors)
