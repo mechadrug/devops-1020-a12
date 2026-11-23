@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -10,7 +11,9 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-PORTS = {'buildchecker': 18081, 'echecker': 18082, 'draft': 18083, 'mdfixer': 18084}
+PORTS = {role: int(os.environ.get('E14_'+role.upper()+'_PORT', default))
+         for role, default in [('buildchecker', 18081), ('echecker', 18082),
+                               ('draft', 18083), ('mdfixer', 18084)]}
 ROOT = Path(__file__).resolve().parents[2]
 
 

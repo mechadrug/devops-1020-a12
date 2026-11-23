@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m py_compile labs/e11e12/pipeline.py labs/e13e14/*.py
-          python3 -m unittest discover -s labs/e11e12 -p 'test_contract.py' -v
+          python3 -m unittest discover -s labs/e11e12 -p 'test_*.py' -v
           python3 -m unittest discover -s labs/e13e14/tests -p 'test_*.py' -v
       - name: Compose and source scan
         run: |
