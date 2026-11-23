@@ -62,7 +62,7 @@ def main(request_path, out):
     assert current['status'] == 'SUCCEEDED', current
     handoff = make_handoff(out/'C1-A/result.json', req['target'])
     # External inputs must be under /course/data to be usable by the real API.
-    transfer = ROOT/'data'/(out.name+'-transfer')
+    transfer = ROOT/'data'/('e13-transfer-'+current['job_id'])
     transfer.mkdir()
     report = transfer/'fixed-md.json'
     save(report, handoff)
@@ -184,10 +184,10 @@ def main(request_path, out):
                 if http('/health')[0]==200:break
             except OSError:time.sleep(.1)
         else:raise RuntimeError('API did not become healthy')
-        body={'idempotency_key':'matrix-'+out.name,'input':a_req}
+        body={'idempotency_key':'matrix-'+out.name,'input':req}
         save(client/'request.json',body)
         first=http('/v1/jobs',body);same=http('/v1/jobs',body)
-        conflict=http('/v1/jobs',dict(body,input=dict(a_req,target=req['base'])))
+        conflict=http('/v1/jobs',dict(body,input=dict(req,target=req['base'])))
         decoded=[{'http':r[0],'body':json.loads(r[2])} for r in [first,same,conflict]]
         save(client/'responses.json',decoded)
         assert [r[0] for r in [first,same,conflict]]==[202,202,409]
@@ -202,11 +202,17 @@ def main(request_path, out):
         assert state_json['status']=='SUCCEEDED',state_json
         artifact_result=json.loads(http('/v1/jobs/'+jid+'/artifacts')[2])
         save(client/'artifacts.json',artifact_result)
+        assert [stage['name'] for stage in artifact_result['stages']] == ['draft','full-check','incremental-check','repair','recheck']
         code,headers,data=http('/v1/jobs/'+jid+'/files/incremental-check.json')
         (client/'downloaded-incremental.json').write_bytes(data)
         item=next(x for x in artifact_result['artifacts'] if x['uri'].endswith('/incremental-check.json'))
         assert code==200 and hashlib.sha256(data).hexdigest()==item['sha256']==headers['X-Content-SHA256']
         save(client/'download-headers.json',headers)
+        for name in ['draft.json','full-check.json','repair.json','recheck.json','candidate.patch']:
+            code,headers,data=http('/v1/jobs/'+jid+'/files/'+name)
+            expected=next(x for x in artifact_result['artifacts'] if x['uri'].endswith('/'+name))
+            assert code==200 and hashlib.sha256(data).hexdigest()==expected['sha256']==headers['X-Content-SHA256']
+            (client/name).write_bytes(data)
         row('C8', ['C8-api'], job_id=jid, download_sha256=item['sha256'])
     finally:
         api.terminate()
