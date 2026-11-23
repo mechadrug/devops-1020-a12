@@ -60,6 +60,13 @@
 
 ## 个人 PR 与 CI
 
-PR：<PERSONAL_PR_URL>
+PR：https://github.com/mechadrug/devops-1020-a12/pull/21
 
-CI：<PERSONAL_CI_RUNS>
+CI（提交 `e1e9d39` 的 push + pull_request 共 10 项检查全部成功）：
+
+- E7：https://github.com/mechadrug/devops-1020-a12/actions/runs/45136494958
+- E8–E10：https://github.com/mechadrug/devops-1020-a12/actions/runs/45136494988
+- E11–E12：https://github.com/mechadrug/devops-1020-a12/actions/runs/45136494945
+- E13–E14（contracts + four-services）：https://github.com/mechadrug/devops-1020-a12/actions/runs/45136494921
+
+本报告后续文档提交不改变上述测试与运行结果；最终源码快照 SHA 以课程包 `provenance.json` 为准。
