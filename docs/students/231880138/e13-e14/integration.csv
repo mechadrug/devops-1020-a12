@@ -1,5 +1,5 @@
 case,executor,status,evidence,remote_signoff
-C1,231880138,PASS,"work/final/C1-C8-B12-complete/C1-A,C1-local-consumer",PENDING
+C1,231880138,PASS,"work/final/C1-C8-B12-complete/C1-A,C1-local-consumer",PENDING_REVERSE_ACK_SEE_B12_AUDIT
 C2,231880138,PASS,"work/final/C1-C8-B12-complete/C2-baseline-report,C2-rejected",
 C3,231880138,PASS,"work/final/C1-C8-B12-complete/C3-rejected,C3-hashes.json",
 C4,231880138,PASS,"work/final/C1-C8-B12-complete/C4-timeout,C4-processes.txt,C4-containers.txt",

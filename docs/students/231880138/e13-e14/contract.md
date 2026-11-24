@@ -2,7 +2,7 @@
 
 A 输入提供完整 base/target、项目历史、候选来源/摘要、行为测试与限制。工具仓库 SHA、目标项目 SHA 和镜像 ID 分开记录。
 
-handoff_a_to_b 核验 result 的成功 schema、target、唯一增量阶段、job/trace、内外 commit 及引用产物的 bytes/SHA，然后生成 fixed-md 信封并保留 source_report。E11-B 如有 fixed_report_sha256，读取字节前验证；错误 SHA、旧 commit、类型错误均拒绝，不手工改 commit。
+handoff_a_to_b 核验 result 的成功 schema、target、唯一增量阶段、job/trace、内外 commit 及引用产物的 bytes/SHA，然后生成 fixed-md 信封并保留 source_report。**跨组交换请求必须携带 fixed_report_sha256**；A12 E11-B 在解析前验证字节摘要。旧 E11 兼容样例可不带摘要，不作为组间传输证据；错误 SHA、旧 commit、类型错误均拒绝，不手工改 commit。
 
 E14 四角色 /v1/run 消费工作目录中的任务副本；MDFixer 核对增量报告 SHA 和 schema/kind/status/commit/job/trace。Compose 与宿主编排共用 UID/GID；工作输入放 data、输出放新的 work 子目录。健康请求不等待角色写锁，写操作串行。
 
