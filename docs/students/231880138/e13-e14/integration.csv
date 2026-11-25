@@ -1,0 +1,9 @@
+case,executor,status,evidence,remote_signoff
+C1,231880138,PASS,"work/final/C1-C8-B12-complete/C1-A,C1-local-consumer",B12_SIGNED_20261124_SEE_DEADLINE_STATUS
+C2,231880138,PASS,"work/final/C1-C8-B12-complete/C2-baseline-report,C2-rejected",
+C3,231880138,PASS,"work/final/C1-C8-B12-complete/C3-rejected,C3-hashes.json",
+C4,231880138,PASS,"work/final/C1-C8-B12-complete/C4-timeout,C4-processes.txt,C4-containers.txt",
+C5,231880138,PASS,"work/final/C1-C8-B12-complete/C5-test-rejected,C5-invalid-rejected,C5-source-state.json",
+C6,231880138,PASS,"work/final/C1-C8-B12-complete/C6-hit.txt,C6-clean.txt,C6-hashes.json",
+C7,231880138,PASS,"work/final/C1-C8-B12-complete/C7-failed,C7-recovery",
+C8,231880138,PASS,work/final/C1-C8-B12-complete/C8-api,

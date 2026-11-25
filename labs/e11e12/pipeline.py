@@ -44,6 +44,22 @@ def load_artifact(path, expected_sha256):
         raise Failure('ARTIFACT_HASH_MISMATCH','Artifact content changed during transfer')
     return json.loads(data)
 
+def fixed_report(request, target_sha):
+    """Check transferred bytes before interpreting an external MD report."""
+    path = Path(request['fixed_report'])
+    expected = request.get('fixed_report_sha256')
+    if expected is not None:
+        if not isinstance(expected, str) or not re.fullmatch(r'[0-9a-f]{64}', expected):
+            raise Failure('INVALID_REQUEST', 'Use a complete lowercase report SHA256')
+        envelope = load_artifact(path, expected)
+    else:
+        # Original E11 fixed fixtures predate the optional transport digest.
+        envelope = json.loads(path.read_text(encoding='utf-8'))
+    check_envelope(envelope, target_sha, 'fixed-md')
+    if envelope.get('data', {}).get('commit') != target_sha:
+        raise Failure('STALE_REPORT', 'Fixed report data commit mismatch')
+    return envelope
+
 def command(argv, cwd, log):
     log.parent.mkdir(parents=True, exist_ok=True)
     p = subprocess.run(argv, cwd=cwd, capture_output=True, text=True, timeout=120)
@@ -98,6 +114,10 @@ def execute(request, out, job_id=None):
         base_sha=snapshot(repo,request['base'],base,out/'logs')
         target_sha=snapshot(repo,request['target'],target,out/'logs')
         result.update(base_commit=base_sha,target_commit=target_sha)
+        if mode == 'e11-b':
+            # Reject stale or damaged transfers before starting a costly build.
+            # The consumer checks again immediately before using the report.
+            fixed_report(request, target_sha)
         if mode in ('e11-b','e12'):
             from draft.autobuild import auto_build
             candidate=Path(request['candidate']).resolve()
@@ -124,12 +144,8 @@ def execute(request, out, job_id=None):
             md_envelope=stage('incremental-check',target_sha,current,[out/'incremental-report.json',out/'target-full/findings.json'])
         else:
             # E11-B still consumes a fixed MD input, separately from A's live output.
-            fixed=Path(request['fixed_report'])
-            envelope=json.loads(fixed.read_text(encoding='utf-8'))
-            check_envelope(envelope,target_sha,'fixed-md')
+            envelope=fixed_report(request,target_sha)
             current=envelope['data']
-            if current.get('commit') != target_sha:
-                raise Failure('STALE_REPORT','Fixed report data commit mismatch')
             save(out/'fixed-md-input.json',envelope)
             md_envelope=stage('fixed-md',target_sha,current,[out/'fixed-md-input.json'])
         if mode in ('e11-b','e12'):
