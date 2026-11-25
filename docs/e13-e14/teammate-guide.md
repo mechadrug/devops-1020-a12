@@ -1,10 +1,10 @@
 # A12 E13–E14 组员操作与提交说明
 
-主责：王备中 231880138。共同 PR：[PR18](https://github.com/mechadrug/devops-1020-a12/pull/18)。当前状态为候选待发布，B12 真实回执、同伴审查/合并及最终标签尚未齐；不能写成已发布 v0.9-rc。
+主责：王备中 231880138。共同 PR：[PR18](https://github.com/mechadrug/devops-1020-a12/pull/18)。2026-11-25 更新：B12 实际回包、反向签收及其 CI 记录已收齐；李玄同 PR21 和个人实验可见，丁/胡暂无可核验本次远端交付。仍待 A12 获准合并及自己的最终标签，不再等待群通知。当前候选待发布，不能写成已发布 v0.9-rc。
 
-## 先做审查
+## 已有审查与组员当前任务
 
-李玄同、丁宏业、胡凌岳任一位先检查 PR18 的三项修复：外部 fixed-MD SHA、非 root UID/GID、长任务健康检查；同时检查 B12_SOURCE.json、实际产物和已知限制。通过 Files changed → Review changes 提交具体正式 Review。发现问题写明文件、预期与实际，主责修复后再确认。暂不自行合并或创建标签，先与主责对齐 B12 签收和最终 CI。
+李玄同已提交过 [正式批准审查](https://github.com/mechadrug/devops-1020-a12/pull/18#pullrequestreview-6018226183)，但 11 月 24 日文档推送后平台将其标为失效；功能代码未变。请李有空时确认最新文档并恢复正式批准，无需另找多人凑审查数量。三人现在均可从当前主责分支开展本人实验，不必等待另外两人回复。各自完成下文的个人运行、有效测试/修复、报告和个人 PR；个人 PR 仍需真实 CI 与同伴审查。若发现公共代码问题，附输入、完整 SHA、预期/实际及日志反馈主责。暂不自行合并 PR18 或创建标签，先对齐剩余组间签收与最终 CI。
 
 ## 在本人目录运行
 
@@ -25,16 +25,18 @@ git rev-parse HEAD
 git status --short
 python3 run_e11e12.py build
 python3 run_e11e12.py test
+PYTHONPATH=labs/e13e14 python3 -B -m unittest discover -s labs/e13e14/tests -p 'test*.py' -v
 python3 run_e11e12.py prepare
 python3 labs/e13e14/prepare_a12_project.py
 ```
 
 已有目录时先保留现场并确认当前 SHA，不重新 clone 覆盖，不重复 prepare。若 GitHub 不可达，可从主责课程包 reproduction/A12-e13-e14-source.bundle 克隆，随后设置 origin 为实际 A12 URL。prepare_a12_project 重建的是王备中维护的共享 A12 项目历史，它不是执行同学自己的开发贡献；必须注明提供者。
 
-保存本人一项检测回归，并增加一项有实际价值的适配/契约测试或修复，记录本人贡献。不要仅改学号或机械复制主责测试。
+先保存 git rev-parse HEAD 到本人 work/source-sha.txt，实验使用的 SHA 与后续个人测试/报告提交 SHA 分开记录。保存本人一项检测回归，并增加一项有实际价值的适配/契约测试或修复，记录本人贡献。不要仅改学号或机械复制主责测试。
 
 ```bash
 mkdir -p work
+git rev-parse HEAD > work/source-sha.txt
 python3 run_e11e12.py run --request data/e13-a12-policy/request-e11-a.json --out work/e13-personal-A-01 > work/e13-personal-A-01.console.log 2>&1
 ```
 
@@ -60,7 +62,7 @@ python3 labs/e13e14/scan_runtime_logs.py work/e14-personal-01 work/e14-personal-
 
 每次使用新输出目录。五阶段均成功、同一 job/trace、报告目标提交一致、repair 使用当次报告摘要、accepted=true、最终无 MD，四角色日志确有本人 job，才能写通过。失败时保留原目录、日志和退出码，用新目录复测；只关闭本人 Compose 项目。
 
-公共 C1–C8、教师三项目和主责故障恢复可以作为注明来源的组级证据引用，不能冒充本人独立运行。若课程要求每人完整运行，则按教师手册在本人目录另做完整矩阵；不要复制王备中的 work 改名。B12 提供的 Reading Window bundle、候选和出处位于其仓库 evidence/E11-E12/241276010/real-project，或主责证据包 data/b12-project；目标保持原完整 SHA。
+公共 C1–C8、教师三项目、主责故障恢复，以及徐泽宇提供的 B12 回包可以作为注明来源的组级证据引用，不能冒充本人独立运行。若课程要求每人完整运行，则按教师手册在本人目录另做完整矩阵；不要复制王备中的 work 改名。B12 提供的 Reading Window bundle、候选和出处位于其仓库 evidence/E11-E12/241276010/real-project，或主责证据包 data/b12-project；目标保持原完整 SHA。
 
 ## 个人 PR 与网站 ZIP
 
@@ -70,8 +72,8 @@ python3 labs/e13e14/scan_runtime_logs.py work/e14-personal-01 work/e14-personal-
 
 ## 主责还需收齐的材料
 
-1. B12 用 A12-E13-交给B12.zip 实际执行后的完整 OUT 归档和执行者身份、B 完整源码 SHA、该 SHA 的 CI 链接；同时请其签收我们对 Reading Window 的检测结果。
-2. PR18 的同伴正式 Review，修复意见处理后再核对最终 CI。
-3. 门禁齐备后确定已合并的集成 SHA，由获准人员创建且不移动 v0.9-rc，补 Release Notes 和最终 ZIP。
+1. 已收到 `B12_E13_to_A12.tar.gz`：执行者徐泽宇 241276010，B 工具 `1fc3728c2d10e840f502c5f30716e69b31a551ca`；A policy target `9c312e412e6c3efb3dbed3b3fd4db50afccfb52e` 成功消费，8 项行为测试通过。主责已核对原交接包与 685 个清单引用，旧 work 中的 PENDING 不回写。B C2/C3 是构建后拒绝，与 A 的提前拒绝时机不同。
+2. B12 已在远端正式接受 Reading Window 检测结果，并提供 pipeline 358293 / `54ab7ca…` 的 CI 记录；执行版本、CI 版本及其发布版本的三个相关模块完全一致。已收齐，不必重复催 B。私有 CI 仅能读取其提交记录，直接页面需登录，此限制保留。
+3. 主责完成当前提交/CI核查，获准合并后记录集成 SHA、检查合并后 CI，再获准创建且不移动 A12 自己的 v0.9-rc。B 已有标签不代表 A 已发布。李的个人 PR21 可审查整合；丁、胡应立即按本文在本人目录完成个人证据与 ZIP，不得拿主责包改学号。王备中个人材料不再因等待这两个 PR 延后。
 
 目前没有授权任何人借此文档跳过门禁、直接 push main 或覆盖已有标签。共享云机的旧 doctor 内存检查仍不通过，报告应保留该事实。
